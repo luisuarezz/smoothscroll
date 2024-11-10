@@ -1,45 +1,32 @@
-const track = document.getElementById("image-track");
+document.addEventListener("DOMContentLoaded", () => {
+    const track = document.getElementById("image-track");
+    let percentage = 0;
 
-const handleOnDown = e => track.dataset.mouseDownAt = e.clientX;
+    const handleOnWheel = (e) => {
+        e.preventDefault();
+        
+        // Invert the delta value to match natural scroll direction
+        const delta = -e.deltaX;
+        
+        // Fine-tuned sensitivity
+        percentage += delta * 0.1;
+        
+        // Constrain the percentage between -100 and 0
+        percentage = Math.max(Math.min(percentage, 0), -100);
+        
+        // Animate the track
+        track.animate({
+            transform: `translate(${percentage}%, -50%)`
+        }, { duration: 1500, fill: "forwards", easing: "ease-out" });
+        
+        // Animate each image
+        for(const image of track.getElementsByClassName("image")) {
+            image.animate({
+                objectPosition: `${100 + percentage}% center`
+            }, { duration: 1500, fill: "forwards", easing: "ease-out" });
+        }
+    }
 
-const handleOnUp = () => {
-  track.dataset.mouseDownAt = "0";  
-  track.dataset.prevPercentage = track.dataset.percentage;
-}
-
-const handleOnMove = e => {
-  if(track.dataset.mouseDownAt === "0") return;
-  
-  const mouseDelta = parseFloat(track.dataset.mouseDownAt) - e.clientX,
-        maxDelta = window.innerWidth / 2;
-  
-  const percentage = (mouseDelta / maxDelta) * -100,
-        nextPercentageUnconstrained = parseFloat(track.dataset.prevPercentage) + percentage,
-        nextPercentage = Math.max(Math.min(nextPercentageUnconstrained, 0), -100);
-  
-  track.dataset.percentage = nextPercentage;
-  
-  track.animate({
-    transform: `translate(${nextPercentage}%, -50%)`
-  }, { duration: 1200, fill: "forwards" });
-  
-  for(const image of track.getElementsByClassName("image")) {
-    image.animate({
-      objectPosition: `${100 + nextPercentage}% center`
-    }, { duration: 1200, fill: "forwards" });
-  }
-}
-
-/* -- Had to add extra lines for touch events -- */
-
-window.onmousedown = e => handleOnDown(e);
-
-window.ontouchstart = e => handleOnDown(e.touches[0]);
-
-window.onmouseup = e => handleOnUp(e);
-
-window.ontouchend = e => handleOnUp(e.touches[0]);
-
-window.onmousemove = e => handleOnMove(e);
-
-window.ontouchmove = e => handleOnMove(e.touches[0]);
+    // Add wheel event listener
+    window.addEventListener('wheel', handleOnWheel, { passive: false });
+});
